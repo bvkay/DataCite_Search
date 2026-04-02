@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DataCite DOI Search</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #333;
+            padding: 24px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 20px; color: #1e40af; margin-bottom: 4px; }
+        .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+
+        /* Search section */
+        .search-section {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .search-section:last-of-type { border-bottom: none; }
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        input[type="text"]:focus { outline: none; border-color: #2563eb; }
+        select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #fff;
+        }
+        select:focus { outline: none; border-color: #2563eb; }
+        button {
+            padding: 8px 20px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #93c5fd; cursor: not-allowed; }
+
+        /* Results */
+        #results {
+            font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .log-info { color: #2563eb; }
+        .log-success { color: #16a34a; }
+        .log-warn { color: #ca8a04; }
+        .log-error { color: #dc2626; }
+        .log-dim { color: #9ca3af; }
+        .log-title { color: #111; font-weight: bold; }
+        .log-divider { color: #d1d5db; }
+        .log-doi a { color: #2563eb; text-decoration: none; }
+        .log-doi a:hover { text-decoration: underline; }
+
+        .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-note {
+            font-size: 12px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .network-section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .toggle-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .toggle-btn {
+            padding: 6px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            color: #374151;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .toggle-btn:hover { border-color: #2563eb; color: #2563eb; }
+        .toggle-btn.active {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
+        .export-bar {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .export-btn {
+            padding: 6px 14px;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .export-btn:hover { background: #e5e7eb; }
+
+        @media (max-width: 600px) {
+            .input-row { flex-direction: column; }
+            select, input[type="text"], button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>DataCite DOI Search</h1>
+    <p class="subtitle">Look up dataset metadata and journal citations from DataCite</p>
+
+    <!-- Network selector -->
+    <div class="network-section">
+        <div class="section-label">Browse Seismic Networks</div>
+        <div class="toggle-row">
+            <button class="toggle-btn" data-key="auspass" onclick="selectInstitution('auspass')">AusPass</button>
+            <button class="toggle-btn" data-key="anu" onclick="selectInstitution('anu')">ANU</button>
+            <button class="toggle-btn" data-key="utas" onclick="selectInstitution('utas')">UTas</button>
+            <button class="toggle-btn" data-key="adelaide" onclick="selectInstitution('adelaide')">UoA</button>
+        </div>
+        <div class="input-row">
+            <select id="network-select"><option value="">Select an institution above...</option></select>
+            <button onclick="searchDropdown('network-select')">Go</button>
+        </div>
+        <div id="network-status" class="loading-note"></div>
+    </div>
+
+    <!-- DOI text search -->
+    <div class="search-section">
+        <div class="section-label">Search by DOI</div>
+        <div class="input-row">
+            <input type="text" id="doi-input" value="10.7914/SN/2P_2020" placeholder="e.g. 10.7914/SN/2P_2020" />
+            <button onclick="searchDoi()">Search</button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results"></div>
+
+<script>
+
+    // ═══════════════════════════════════════════════
+    // INSTITUTION NETWORK DEFINITIONS
+    // From FDSN: https://www.fdsn.org/networks/institution/
+    // ═══════════════════════════════════════════════
+
+    // UTas (institution 549)
+    var UTAS_CODES = [
+        '5K_2002', '5Q_2023', '8G_2024', '8T_2023', '9V_2015', 'Z9_2021', 'ZB_2024'
+    ];
+
+    // Adelaide (institution 1848)
+    var ADELAIDE_CODES = [
+        '1H_2024', '2X_2022', '3X_2022', '6D_2022'
+    ];
+
+    // ANU (institution 1647)
+    var ANU_CODES = [
+        '1E_2013', '1F_2009', '1G_2008', '1G_2019', '1G_2020', '1H_2010',
+        '1K_2013', '1L_2021', '1P_2011', '1Q_2016', '2B_2023', '2E_2023',
+        '2J_2009', '2P_2020', '3D_2008', '3F_2020', '3G_2018', '3M_2013',
+        '3O_2019', '4B_2023', '4H_2009', '4J_2014', '4K_2024', '4Z_2021',
+        '5C_2017', '5G_2018', '5J_2017', '6C_2015', '6F_2008', '6T_2018',
+        '7A_1992', '7B_1993', '7C_1994', '7D_1997', '7E_1998', '7F_1999',
+        '7G_2000', '7H_2001', '7I_2003', '7J_2005', '7K_2007', '7L_2011',
+        '7M_1998', '7N_1999', '7O_2000', '7P_2002', '7Q_2004', '7R_2005',
+        '7S_2006', '7T_2007', '7U_2007', '8A_2024', '8J_2012', '8K_2014',
+        '8M_2016', '9B_2020', '9M_2023', 'M8', 'S1', 'X5_2023', 'X8_2005',
+        'XQ_1997', 'YB_2026', 'Z5_2018', 'ZJ_2025', 'ZR_2009'
+    ];
+
+    // ═══════════════════════════════════════════════
+    // POPULATE DROPDOWNS
+    // ═══════════════════════════════════════════════
+
+    var fdsnNetworks = []; // All FDSN networks with DOIs
+
+    async function init() {
+        try {
+            // Fetch all FDSN networks (has DOIs)
+            var resp = await fetch('https://www.fdsn.org/ws/networks/1/query?format=json');
+            var data = await resp.json();
+            fdsnNetworks = data.networks || data;
+
+            // Build DOI lookup: code_startYear -> { doi, name, startYear, endYear }
+            var doiMap = {};
+            for (var i = 0; i < fdsnNetworks.length; i++) {
+                var n = fdsnNetworks[i];
+                var code = n.fdsn_code;
+                var sy = n.start_date ? n.start_date.substring(0, 4) : '';
+                var ey = n.end_date ? n.end_date.substring(0, 4) : '';
+                var key = sy ? code + '_' + sy : code;
+                doiMap[key] = { doi: n.doi || '', name: n.name || '', startYear: sy, endYear: ey, code: code };
+                // Also store by code alone (fallback)
+                if (!doiMap[code] || n.doi) doiMap[code] = doiMap[key];
+            }
+
+            // Build institution option lists
+            institutionOptions.auspass = await buildAusPassOptions(doiMap);
+            institutionOptions.anu = buildInstitutionOptions(ANU_CODES, doiMap);
+            institutionOptions.utas = buildInstitutionOptions(UTAS_CODES, doiMap);
+            institutionOptions.adelaide = buildInstitutionOptions(ADELAIDE_CODES, doiMap);
+
+            // Default to AusPass selected
+            selectInstitution('auspass');
+
+        } catch (err) {
+            console.error('Failed to load FDSN networks:', err);
+            document.getElementById('network-status').textContent = 'Failed to load networks: ' + err.message;
+        }
+    }
+
+    var institutionOptions = {};
+    var activeInstitution = null;
+
+    function selectInstitution(key) {
+        activeInstitution = key;
+
+        // Update toggle button styles
+        var btns = document.querySelectorAll('.toggle-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.remove('active');
+            if (btns[i].getAttribute('data-key') === key) btns[i].classList.add('active');
+        }
+
+        // Populate the single dropdown
+        var sel = document.getElementById('network-select');
+        var options = institutionOptions[key] || [];
+
+        sel.innerHTML = '<option value="">Select a network...</option>';
+        for (var j = 0; j < options.length; j++) {
+            var opt = document.createElement('option');
+            opt.value = options[j].doi;
+            opt.textContent = options[j].label;
+            if (!options[j].doi) opt.disabled = true;
+            sel.appendChild(opt);
+        }
+
+        var withDoi = options.filter(function(o) { return o.doi; }).length;
+        document.getElementById('network-status').textContent = options.length + ' networks (' + withDoi + ' with DOIs)';
+    }
+
+    async function buildAusPassOptions(doiMap) {
+        try {
+            var resp = await fetch('https://auspass.edu.au/fdsnws/station/1/query?level=network&format=text');
+            var text = await resp.text();
+            var lines = text.trim().split('\n');
+            var options = [];
+
+            for (var i = 1; i < lines.length; i++) {
+                var parts = lines[i].split('|');
+                if (parts.length < 5) continue;
+                var code = parts[0].trim();
+                var desc = parts[1].trim();
+                var startTime = parts[2].trim();
+                var startYear = startTime ? startTime.substring(0, 4) : '';
+                var endTime = parts[3].trim();
+                var endYear = endTime ? endTime.substring(0, 4) : '';
+                var yearRange = startYear + (endYear && endYear !== startYear ? '-' + endYear : '');
+
+                var key = startYear ? code + '_' + startYear : code;
+                var match = doiMap[key] || doiMap[code];
+                var doi = match ? match.doi : '';
+
+                options.push({
+                    doi: doi,
+                    label: code + ' (' + yearRange + '): ' + desc + (doi ? '' : ' [no DOI]'),
+                    sortKey: code + '_' + startYear
+                });
+            }
+
+            sortByYearDesc(options);
+            return options;
+        } catch (err) {
+            console.error('AusPass fetch failed:', err);
+            return [];
+        }
+    }
+
+    function buildInstitutionOptions(codes, doiMap) {
+        var options = [];
+        for (var i = 0; i < codes.length; i++) {
+            var key = codes[i];
+            var match = doiMap[key] || doiMap[key.split('_')[0]];
+            if (!match) continue;
+            var yearRange = match.startYear + (match.endYear && match.endYear !== match.startYear ? '-' + match.endYear : '');
+            options.push({
+                doi: match.doi,
+                label: match.code + ' (' + yearRange + '): ' + match.name + (match.doi ? '' : ' [no DOI]'),
+                sortKey: match.code + '_' + match.startYear
+            });
+        }
+        sortByYearDesc(options);
+        return options;
+    }
+
+    function sortByYearDesc(options) {
+        options.sort(function(a, b) {
+            var ya = parseInt(a.sortKey.split('_')[1]) || 0;
+            var yb = parseInt(b.sortKey.split('_')[1]) || 0;
+            if (yb !== ya) return yb - ya;
+            return a.sortKey.localeCompare(b.sortKey);
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // SEARCH
+    // ═══════════════════════════════════════════════
+
+    function searchDoi() {
+        var doi = document.getElementById('doi-input').value.trim()
+            .replace(/^https?:\/\/doi\.org\//i, '').replace(/^doi:/i, '').trim();
+        if (!doi) return;
+        runSearch(doi);
+    }
+
+    function searchDropdown(selectId) {
+        var doi = document.getElementById(selectId).value;
+        if (!doi) return;
+        runSearch(doi);
+    }
+
+    async function runSearch(doi) {
+        var el = document.getElementById('results');
+        el.innerHTML = '';
+
+        log('Searching DataCite for ' + doi + '...', 'log-dim');
+
+        // Fetch metadata and citations in parallel
+        var meta, dataciteResult;
+        try {
+            var results = await Promise.all([fetchDataCiteMeta(doi), fetchDataCiteCitations(doi)]);
+            meta = results[0];
+            dataciteResult = results[1];
+        } catch (e) {
+            meta = null;
+            dataciteResult = { error: e.message, citations: [] };
+        }
+
+        if (meta) {
+            log('── Dataset ──', 'log-divider');
+            log('Title:      ' + fixEncoding(meta.title || 'N/A'), 'log-title');
+            log('Authors:    ' + fixEncoding(meta.authors || 'N/A'), '');
+            log('Publisher:  ' + fixEncoding(meta.publisher || 'N/A') + '  |  Year: ' + (meta.year || 'N/A') + '  |  Type: ' + (meta.type || 'N/A'), '');
+            if (meta.rights) log('Rights:     ' + meta.rights, '');
+            logHtml('<span class="log-doi">DOI:        <a href="https://doi.org/' + escapeHtml(doi) + '" target="_blank">https://doi.org/' + escapeHtml(doi) + '</a></span>');
+        } else {
+            log('DOI not found in DataCite.', 'log-warn');
+        }
+
+        if (dataciteResult.error) {
+            log('Error: ' + dataciteResult.error, 'log-warn');
+        }
+
+        // Filter to journal articles only
+        var all = dataciteResult.citations || [];
+        var journalTypes = ['journalarticle', 'journal article', 'journal-article', 'article'];
+        var merged = all.filter(function(c) {
+            if (c.type) return journalTypes.indexOf(c.type.toLowerCase().replace(/-/g, '')) >= 0
+                || journalTypes.indexOf(c.type.toLowerCase()) >= 0;
+            return c.journal && c.journal !== 'N/A';
+        });
+        merged.sort(function(a, b) { return (b.year || 0) - (a.year || 0); });
+
+        var filtered = all.length - merged.length;
+
+        if (merged.length === 0) {
+            log('── No journal citations found' + (filtered > 0 ? ' (' + filtered + ' non-journal filtered)' : '') + ' ──', 'log-warn');
+            log('This may mean the DOI was not formally cited in any reference list,', 'log-dim');
+            log('or citations have not yet been indexed by DataCite.', 'log-dim');
+            return;
+        }
+
+        // Enrich citations with corrupted metadata from Crossref
+        var toEnrich = merged.filter(function(c) { return c.doi && (c.authors || '').indexOf('??') >= 0; });
+        if (toEnrich.length > 0) {
+            await Promise.all(toEnrich.map(function(c) {
+                return fetch('https://api.crossref.org/works/' + encodeURIComponent(c.doi))
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(data) {
+                        if (!data || !data.message) return;
+                        var m = data.message;
+                        c.authors = formatAuthors(m.author);
+                        if (m.title && m.title[0]) c.title = m.title[0];
+                        if (m['container-title'] && m['container-title'][0]) c.journal = m['container-title'][0];
+                    })
+                    .catch(function() {});
+            }));
+        }
+
+        log('', '');
+        log('── Journal Citations (' + merged.length + (filtered > 0 ? ', ' + filtered + ' non-journal filtered' : '') + ') ──', 'log-divider');
+        for (var i = 0; i < merged.length; i++) {
+            var c = merged[i];
+            log('[' + (i + 1) + '] ' + fixEncoding(c.title || 'Untitled'), 'log-title');
+            log('    ' + fixEncoding(c.authors || 'Unknown') + ' (' + (c.year || 'N/A') + ') ' + fixEncoding(c.journal || ''), '');
+            logHtml('    <span class="log-doi"><a href="https://doi.org/' + escapeHtml(c.doi) + '" target="_blank">https://doi.org/' + escapeHtml(c.doi) + '</a></span>');
+            log('', '');
+        }
+
+        // Show export buttons
+        if (merged.length > 0) {
+            var exportDiv = document.createElement('div');
+            exportDiv.className = 'export-bar';
+            var csvBtn = document.createElement('button');
+            csvBtn.className = 'export-btn';
+            csvBtn.textContent = 'Export CSV';
+            csvBtn.onclick = function() { exportCSV(merged, doi); };
+            var bibBtn = document.createElement('button');
+            bibBtn.className = 'export-btn';
+            bibBtn.textContent = 'Export BibTeX';
+            bibBtn.onclick = function() { exportBibTeX(merged, doi); };
+            exportDiv.appendChild(csvBtn);
+            exportDiv.appendChild(bibBtn);
+            document.getElementById('results').appendChild(exportDiv);
+        }
+    }
+
+    function exportCSV(citations, datasetDoi) {
+        var header = 'DOI,Title,Authors,Year,Journal,Dataset DOI';
+        var rows = citations.map(function(c) {
+            return [
+                '"' + (c.doi || '').replace(/"/g, '""') + '"',
+                '"' + fixEncoding(c.title || '').replace(/"/g, '""') + '"',
+                '"' + fixEncoding(c.authors || '').replace(/"/g, '""') + '"',
+                c.year || '',
+                '"' + fixEncoding(c.journal || '').replace(/"/g, '""') + '"',
+                '"' + datasetDoi + '"'
+            ].join(',');
+        });
+        var csv = header + '\n' + rows.join('\n');
+        downloadFile(csv, 'citations-' + datasetDoi.replace(/\//g, '_') + '.csv', 'text/csv');
+    }
+
+    function exportBibTeX(citations, datasetDoi) {
+        var entries = citations.map(function(c, i) {
+            var key = (c.authors || 'unknown').split(',')[0].trim().replace(/\s+/g, '') + (c.year || '') + '_' + (i + 1);
+            var authors = fixEncoding(c.authors || 'Unknown').replace(/;/g, ' and');
+            return '@article{' + key + ',\n'
+                + '  title     = {' + fixEncoding(c.title || 'Untitled') + '},\n'
+                + '  author    = {' + authors + '},\n'
+                + '  year      = {' + (c.year || '') + '},\n'
+                + '  journal   = {' + fixEncoding(c.journal || '') + '},\n'
+                + '  doi       = {' + (c.doi || '') + '},\n'
+                + '  note      = {Cites dataset ' + datasetDoi + '}\n'
+                + '}';
+        });
+        var bib = entries.join('\n\n');
+        downloadFile(bib, 'citations-' + datasetDoi.replace(/\//g, '_') + '.bib', 'text/plain');
+    }
+
+    function downloadFile(content, filename, mimeType) {
+        var blob = new Blob([content], { type: mimeType });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+
+    // ═══════════════════════════════════════════════
+    // DATACITE
+    // ═══════════════════════════════════════════════
+
+    async function fetchDataCiteMeta(doi) {
+        try {
+            var query = 'query($id: ID!) { work(id: $id) { doi titles { title } publicationYear creators { name givenName familyName } publisher { name } types { resourceTypeGeneral resourceType } version registered descriptions { description descriptionType } rights { rights } } }';
+            var resp = await fetch('https://api.datacite.org/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query, variables: { id: doi } })
+            });
+            if (!resp.ok) return null;
+            var result = await resp.json();
+            var w = result.data && result.data.work;
+            if (!w) return null;
+
+            var authors = (w.creators || []).map(function(c) {
+                if (c.familyName && c.givenName) return c.familyName + ', ' + c.givenName;
+                return c.name || 'Unknown';
+            }).join('; ');
+
+            var desc = '';
+            if (w.descriptions) {
+                for (var i = 0; i < w.descriptions.length; i++) {
+                    if (w.descriptions[i].description) { desc = w.descriptions[i].description; break; }
+                }
+            }
+
+            return {
+                title: w.titles && w.titles[0] ? w.titles[0].title : '',
+                authors: authors,
+                publisher: w.publisher && w.publisher.name ? w.publisher.name : '',
+                year: w.publicationYear || '',
+                type: w.types ? (w.types.resourceType || w.types.resourceTypeGeneral || '') : '',
+                version: w.version || '',
+                registered: w.registered ? w.registered.substring(0, 10) : '',
+                rights: (w.rights || []).map(function(r) { return r.rights; }).filter(Boolean).join('; '),
+                description: desc
+            };
+        } catch (e) { return null; }
+    }
+
+    async function fetchDataCiteCitations(doi) {
+        try {
+            var query = 'query($id: ID!) { work(id: $id) { citationCount citations { nodes { doi titles { title } publicationYear creators { name givenName familyName } publisher { name } container { title } types { resourceTypeGeneral } } } } }';
+            var resp = await fetch('https://api.datacite.org/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query, variables: { id: doi } })
+            });
+            if (!resp.ok) return { error: 'HTTP ' + resp.status, citations: [] };
+            var result = await resp.json();
+            if (result.errors) return { error: result.errors[0].title || result.errors[0].message, citations: [] };
+            var w = result.data && result.data.work;
+            if (!w) return { error: 'DOI not found', citations: [] };
+
+            var nodes = w.citations && w.citations.nodes ? w.citations.nodes : [];
+            var citations = nodes.map(function(n) {
+                return {
+                    doi: normDoi(n.doi),
+                    authors: formatAuthors(n.creators),
+                    year: n.publicationYear || null,
+                    title: n.titles && n.titles[0] ? n.titles[0].title : 'Untitled',
+                    journal: n.container && n.container.title ? n.container.title : (n.publisher && n.publisher.name ? n.publisher.name : 'N/A'),
+                    type: n.types && n.types.resourceTypeGeneral ? n.types.resourceTypeGeneral : ''
+                };
+            });
+            return { error: null, citations: citations };
+        } catch (e) { return { error: e.message, citations: [] }; }
+    }
+
+    // ═══════════════════════════════════════════════
+    // UTILITIES
+    // ═══════════════════════════════════════════════
+
+    function log(text, cls) {
+        var span = document.createElement('span');
+        span.className = cls || '';
+        span.textContent = text + '\n';
+        document.getElementById('results').appendChild(span);
+    }
+
+    function logHtml(html) {
+        var div = document.createElement('div');
+        div.innerHTML = html + '\n';
+        document.getElementById('results').appendChild(div);
+    }
+
+    function normDoi(doi) {
+        return (doi || '').toLowerCase().replace(/^https?:\/\/doi\.org\//i, '').trim();
+    }
+
+    function fixEncoding(text) {
+        if (!text) return text;
+        return text
+            .replace(/\u00e2\u0080\u0093/g, '\u2013')
+            .replace(/\u00e2\u0080\u0094/g, '\u2014')
+            .replace(/\u00e2\u0080\u0099/g, '\u2019')
+            .replace(/\u00e2\u0080\u009c/g, '\u201c')
+            .replace(/\u00e2\u0080\u009d/g, '\u201d')
+            .replace(/\ufffd/g, '\u2013')
+            .replace(/\?{2,3}(?=\d)/g, '\u2013');
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatAuthors(creators) {
+        if (!creators || creators.length === 0) return 'Unknown';
+        return creators.map(function(c) {
+            if (c.family && c.given) return c.family + ', ' + c.given.charAt(0) + '.';
+            if (c.familyName && c.givenName) return c.familyName + ', ' + c.givenName.charAt(0) + '.';
+            return c.name || c.literal || 'Unknown';
+        }).join(', ');
+    }
+
+
+    // Start
+    init();
+    searchDoi();
+
+</script>
+</body>
+</html>
