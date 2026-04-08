@@ -187,78 +187,153 @@
 <script>
 
     // ═══════════════════════════════════════════════
-    // INSTITUTION NETWORK DEFINITIONS
-    // From FDSN: https://www.fdsn.org/networks/institution/
+    // INSTITUTION NETWORK DATA
+    // Sourced from FDSN (https://www.fdsn.org/networks/institution/)
+    // Embedded to avoid CORS issues with fdsn.org
     // ═══════════════════════════════════════════════
 
-    // UTas (institution 549)
-    var UTAS_CODES = [
-        '5K_2002', '5Q_2023', '8G_2024', '8T_2023', '9V_2015', 'Z9_2021', 'ZB_2024'
-    ];
-
-    // Adelaide (institution 1848)
-    var ADELAIDE_CODES = [
-        '1H_2024', '2X_2022', '3X_2022', '6D_2022'
-    ];
-
-    // ANU (institution 1647)
-    var ANU_CODES = [
-        '1E_2013', '1F_2009', '1G_2008', '1G_2019', '1G_2020', '1H_2010',
-        '1K_2013', '1L_2021', '1P_2011', '1Q_2016', '2B_2023', '2E_2023',
-        '2J_2009', '2P_2020', '3D_2008', '3F_2020', '3G_2018', '3M_2013',
-        '3O_2019', '4B_2023', '4H_2009', '4J_2014', '4K_2024', '4Z_2021',
-        '5C_2017', '5G_2018', '5J_2017', '6C_2015', '6F_2008', '6T_2018',
-        '7A_1992', '7B_1993', '7C_1994', '7D_1997', '7E_1998', '7F_1999',
-        '7G_2000', '7H_2001', '7I_2003', '7J_2005', '7K_2007', '7L_2011',
-        '7M_1998', '7N_1999', '7O_2000', '7P_2002', '7Q_2004', '7R_2005',
-        '7S_2006', '7T_2007', '7U_2007', '8A_2024', '8J_2012', '8K_2014',
-        '8M_2016', '9B_2020', '9M_2023', 'M8', 'S1', 'X5_2023', 'X8_2005',
-        'XQ_1997', 'YB_2026', 'Z5_2018', 'ZJ_2025', 'ZR_2009'
-    ];
+    var FDSN_DATA = {
+        anu: [
+            {code:"1E",sy:"2013",ey:"2014",doi:"10.7914/SN/1E_2013",name:"Southern Queensland Spiral Array - 2013-2015 ARC Discovery Grant DP130101473"},
+            {code:"1F",sy:"2009",ey:"2009",doi:"10.7914/SN/1F_2009",name:"Curnamona"},
+            {code:"1G",sy:"2008",ey:"2009",doi:"10.7914/SN/1G_2008",name:"Gawler"},
+            {code:"1G",sy:"2019",ey:"2019",doi:"10.7914/SN/YS_2014",name:"Transitions in the Banda Arc-Australia continental collision"},
+            {code:"1G",sy:"2020",ey:"2021",doi:"10.7914/t2z3-2m87",name:"Lake George Seismic Nodal Array"},
+            {code:"1H",sy:"2010",ey:"2011",doi:"10.7914/SN/1H_2010",name:"EAL2"},
+            {code:"1K",sy:"2013",ey:"2015",doi:"10.7914/SN/1K_2013",name:"Albany-Fraser Experiment"},
+            {code:"1L",sy:"2021",ey:"2021",doi:"10.7914/63mk-n625",name:"Canberra Deep Space Centre DAS"},
+            {code:"1P",sy:"2011",ey:"2013",doi:"10.7914/SN/1P_2011",name:"Bass Strait"},
+            {code:"1Q",sy:"2016",ey:"2017",doi:"10.7914/SN/1Q_2016",name:"AQT"},
+            {code:"2B",sy:"2023",ey:"2024",doi:"10.7914/bfp8-xv25",name:"South Island Seismology at the Speed of Light Experiment"},
+            {code:"2E",sy:"2023",ey:"2023",doi:"10.7914/37v8-hv88",name:"Wairakei Earthquake and Tomography Array (WETA)"},
+            {code:"2J",sy:"2009",ey:"2010",doi:"10.7914/64n9-ft63",name:"South Coast"},
+            {code:"2P",sy:"2020",ey:"2023",doi:"10.7914/SN/2P_2020",name:"South West Australia Network"},
+            {code:"3D",sy:"2008",ey:"2009",doi:"10.7914/efr0-yc38",name:"Ambient Seismic Experiment Tasmania 1"},
+            {code:"3F",sy:"2020",ey:"2022",doi:"10.7914/SN/3F_2020",name:"Macquarie Ridge"},
+            {code:"3G",sy:"2018",ey:"2019",doi:"10.7914/SN/3G_2018",name:"Marla Line"},
+            {code:"3M",sy:"2013",ey:"2016",doi:"10.7914/SN/3M_2013",name:"Australia-Indonesia Tectonics Observatory 2013-2016"},
+            {code:"3O",sy:"2019",ey:"2020",doi:"10.7914/SN/3O_2019",name:"AKIMBA"},
+            {code:"4B",sy:"2023",ey:"2026",doi:"10.7914/9j20-yq91",name:"Seismic Network Around Kangaroo Eyre Yorke"},
+            {code:"4H",sy:"2009",ey:"2010",doi:"10.7914/SN/4H_2009",name:"EAL1"},
+            {code:"4J",sy:"2014",ey:"2016",doi:"10.7914/SN/4J_2014",name:"AQ3 SW Queensland and NW New South Wales"},
+            {code:"4K",sy:"2024",ey:"2024",doi:"10.7914/7b9m-1d60",name:"Fiordland Seismological Sounding of Landslides and Earthquakes (FISSLE)"},
+            {code:"4Z",sy:"2021",ey:"2022",doi:"10.7914/pgt8-x273",name:"Melbourne - ALiRT nodal deployment"},
+            {code:"5C",sy:"2017",ey:"2017",doi:"10.7914/nx28-a367",name:"Perth Basin Array"},
+            {code:"5G",sy:"2018",ey:"2022",doi:"10.7914/SN/5G_2018",name:"Lake Eyre Basin"},
+            {code:"5J",sy:"2017",ey:"2019",doi:"10.7914/SN/5J_2017",name:"ASR"},
+            {code:"6C",sy:"2015",ey:"2016",doi:"10.7914/SN/6C_2015",name:"West Australian Spiral Array"},
+            {code:"6F",sy:"2008",ey:"2011",doi:"10.7914/SN/6F_2008",name:"BILBY"},
+            {code:"6T",sy:"2018",ey:"2026",doi:"10.7914/4e87-j738",name:"NT Spiral Array"},
+            {code:"7A",sy:"1992",ey:"1992",doi:"",name:"BTL"},
+            {code:"7B",sy:"1993",ey:"1996",doi:"10.7914/SN/7B_1993",name:"SKIPPY"},
+            {code:"7C",sy:"1994",ey:"1996",doi:"",name:"YE"},
+            {code:"7D",sy:"1997",ey:"1997",doi:"10.7914/SN/7D_1997",name:"KIMBA97"},
+            {code:"7E",sy:"1998",ey:"1998",doi:"10.7914/SN/7E_1998",name:"KIMBA98"},
+            {code:"7F",sy:"1999",ey:"1999",doi:"10.7914/SN/7F_1999",name:"QUOLL"},
+            {code:"7G",sy:"2000",ey:"2004",doi:"10.7914/SN/7G_2000",name:"West Australian Cratons"},
+            {code:"7H",sy:"2001",ey:"2002",doi:"10.7914/SN/7H_2001",name:"TIGGER BB"},
+            {code:"7I",sy:"2003",ey:"2005",doi:"10.7914/SN/7I_2003",name:"TASMAL"},
+            {code:"7J",sy:"2005",ey:"2008",doi:"10.7914/SN/7J_2005",name:"CAPRA - Linkage"},
+            {code:"7K",sy:"2007",ey:"2008",doi:"10.7914/SN/7K_2007",name:"SOC - Southern Craton"},
+            {code:"7L",sy:"2011",ey:"2013",doi:"10.7914/SN/7L_2011",name:"EAL3"},
+            {code:"7M",sy:"1998",ey:"1998",doi:"10.7914/SN/7M_1998",name:"LF98"},
+            {code:"7N",sy:"1999",ey:"1999",doi:"10.7914/SN/7N_1999",name:"MB99"},
+            {code:"7O",sy:"2000",ey:"2000",doi:"10.7914/SN/7O_2000",name:"AF00"},
+            {code:"7P",sy:"2002",ey:"2002",doi:"10.7914/SN/7P_2002",name:"TIGGER SP"},
+            {code:"7Q",sy:"2004",ey:"2005",doi:"10.7914/SN/7Q_2004",name:"SEAL"},
+            {code:"7R",sy:"2005",ey:"2006",doi:"10.7914/SN/7R_2005",name:"EVA"},
+            {code:"7S",sy:"2006",ey:"2007",doi:"10.7914/SN/7S_2006",name:"SETA"},
+            {code:"7T",sy:"2007",ey:"2007",doi:"10.7914/SN/7T_2007",name:"SEAL2"},
+            {code:"7U",sy:"2007",ey:"2008",doi:"10.7914/SN/7U_2007",name:"SEAL3"},
+            {code:"8A",sy:"2024",ey:"2024",doi:"10.7914/ps89-gf83",name:"Black Mountain SmartSolo Node Testing Experiment"},
+            {code:"8J",sy:"2012",ey:"2014",doi:"10.7914/SN/8J_2012",name:"South Queensland Eastern Australia Linkage - ARC Discovery Grant DP120103673"},
+            {code:"8K",sy:"2014",ey:"2015",doi:"10.7914/SN/8K_2014",name:"Capricorn Orogen High Precision Survey"},
+            {code:"8M",sy:"2016",ey:"2016",doi:"10.7914/SN/8M_2016",name:"MULGA NT Array"},
+            {code:"9B",sy:"2020",ey:"2020",doi:"10.7914/z6kv-sg06",name:"Mt. Stromlo Node Array"},
+            {code:"9M",sy:"2023",ey:"2024",doi:"10.7914/ac1p-7y35",name:"Eyre Peninsula Nodal Array"},
+            {code:"M8",sy:"2024",ey:"",doi:"10.7914/6e8t-6g37",name:"Australian Semi-Permanent Support Network"},
+            {code:"S1",sy:"2011",ey:"",doi:"10.7914/SN/S1",name:"Australian Seismometers in Schools"},
+            {code:"X5",sy:"2023",ey:"2026",doi:"10.7914/8jxr-7029",name:"Auckland-Hauraki Node Array"},
+            {code:"X8",sy:"2005",ey:"2006",doi:"10.7914/xhzt-cq87",name:"Mount Gambier deployment"},
+            {code:"XQ",sy:"1997",ey:"1998",doi:"10.7914/10dz-5n91",name:"Rabaul Earthquake Location and Caldera Structure Program"},
+            {code:"YB",sy:"2026",ey:"2026",doi:"10.7914/g75f-4a16",name:"Rugby NSW aftershock rapid response network"},
+            {code:"Z5",sy:"2018",ey:"2021",doi:"10.7914/SN/Z5_2018",name:"A four-dimensional view of deformation in the Eastern Alaska Range - where did the slip on the Denali fault go?"},
+            {code:"ZJ",sy:"2025",ey:"2028",doi:"10.7914/0zmj-7e94",name:"Southern Alps Monitoring of Weather-Influenced Seismicity and Erosion"},
+            {code:"ZR",sy:"2009",ey:"2011",doi:"10.7914/SN/ZR_2009",name:"Mount Isa Northern Queensland"}
+        ],
+        utas: [
+            {code:"5K",sy:"2002",ey:"2014",doi:"10.7914/hf8d-4s28",name:"Seismic structure of the continent under Antarctica"},
+            {code:"5Q",sy:"2023",ey:"2027",doi:"10.7914/74en-yt90",name:"Ice Sheets and Interactions, East Antarctica"},
+            {code:"8G",sy:"2024",ey:"2028",doi:"10.7914/j9cq-xd60",name:"Ice Sheets and Interactions, Dronning Maud Land and Coats Land"},
+            {code:"8T",sy:"2023",ey:"2027",doi:"",name:"Denman Glacier System"},
+            {code:"9V",sy:"2015",ey:"2025",doi:"10.7914/nrw9-9825",name:"Casey - Davis region"},
+            {code:"Z9",sy:"2021",ey:"2025",doi:"10.7914/SN/Z9_2021",name:"Casey-Wilkins Adaptable Array"},
+            {code:"ZB",sy:"2024",ey:"2027",doi:"",name:"Vanderford-Totten Glacier System"}
+        ],
+        adelaide: [
+            {code:"1H",sy:"2024",ey:"2024",doi:"10.7914/psbw-7z20",name:"Mundi Mundi Passive Seismic Array"},
+            {code:"2X",sy:"2022",ey:"2022",doi:"10.7914/xnz7-th21",name:"Vulcan MT & Passive Seismic Array"},
+            {code:"3X",sy:"2022",ey:"2022",doi:"10.7914/6q5b-va48",name:"Curnamona Cube MT & Passive Seismic Array"},
+            {code:"6D",sy:"2022",ey:"2022",doi:"10.7914/6j8j-9f06",name:"Western Gawler MT & Passive Seismic Array"}
+        ],
+        // Additional networks served by AusPass but not in ANU/UTas/Adelaide lists
+        auspass_extra: [
+            {code:"3B",sy:"2024",ey:"2025",doi:"10.7914/xy0z-bx66",name:"Wyalkatchem Temporary Network"},
+            {code:"4N",sy:"2017",ey:"2022",doi:"10.7914/SN/4N_2017",name:"China-Western Australia Seismic array"},
+            {code:"6I",sy:"2026",ey:"2027",doi:"10.7914/gbnj-wt07",name:"Rapid Deployments for local earthquake swarms in Western Australia"},
+            {code:"6K",sy:"2020",ey:"2022",doi:"10.7914/SN/6K_2020",name:"AusArray SA"},
+            {code:"6Y",sy:"2022",ey:"2023",doi:"10.7914/jr68-qq17",name:"Southland Otago Seismic Array"},
+            {code:"7A",sy:"2024",ey:"2024",doi:"",name:"7A (2024)"},
+            {code:"7M",sy:"2014",ey:"2016",doi:"10.7914/SN/7M_2014",name:"SQEAL"},
+            {code:"9X",sy:"2021",ey:"2022",doi:"10.7914/b1k3-3c71",name:"Kamb Ice Stream Outlet Channel"},
+            {code:"IU",sy:"1988",ey:"",doi:"10.7914/SN/IU",name:"Global Seismograph Network (GSN - IRIS/USGS)"},
+            {code:"OA",sy:"2017",ey:"",doi:"10.11636/135284",name:"AusArray Transportable Array"},
+            {code:"OZ",sy:"1976",ey:"",doi:"",name:"Seismology Research Centre"},
+            {code:"VW",sy:"2012",ey:"",doi:"10.7914/8csc-8z27",name:"University of Melbourne Seismic Network"},
+            {code:"WG",sy:"2022",ey:"2033",doi:"10.7914/xagc-se62",name:"WA Array"},
+            {code:"XX",sy:"2013",ey:"",doi:"10.7914/SN/XX_2013",name:"Test and non-distributed data only"},
+            {code:"Y2",sy:"2025",ey:"2026",doi:"10.7914/r4x6-3573",name:"Kilkivan Temporary Network"},
+            {code:"YS",sy:"2014",ey:"2018",doi:"10.7914/SN/YS_2014",name:"Transitions in the Banda Arc-Australia continental collision"},
+            {code:"YW",sy:"2021",ey:"2025",doi:"10.7914/SN/YW_2021",name:"Muswellbrook"},
+            {code:"Z9",sy:"2022",ey:"2025",doi:"10.7914/SN/Z9_2021",name:"Casey-Wilkins Adaptable Array"}
+        ]
+    };
 
     // ═══════════════════════════════════════════════
     // POPULATE DROPDOWNS
     // ═══════════════════════════════════════════════
 
-    var fdsnNetworks = []; // All FDSN networks with DOIs
+    var institutionOptions = {};
+    var activeInstitution = null;
+
+    // Build DOI lookup from embedded data (for AusPass DOI matching)
+    var doiMap = {};
+    ['anu', 'utas', 'adelaide', 'auspass_extra'].forEach(function(inst) {
+        FDSN_DATA[inst].forEach(function(n) {
+            var key = n.sy ? n.code + '_' + n.sy : n.code;
+            doiMap[key] = { doi: n.doi, name: n.name, startYear: n.sy, endYear: n.ey, code: n.code };
+            if (!doiMap[n.code] || n.doi) doiMap[n.code] = doiMap[key];
+        });
+    });
 
     async function init() {
         try {
-            // Fetch all FDSN networks (has DOIs)
-            var resp = await fetch('https://www.fdsn.org/ws/networks/1/query?format=json');
-            var data = await resp.json();
-            fdsnNetworks = data.networks || data;
+            // Build institution option lists from embedded data
+            institutionOptions.anu = buildEmbeddedOptions(FDSN_DATA.anu);
+            institutionOptions.utas = buildEmbeddedOptions(FDSN_DATA.utas);
+            institutionOptions.adelaide = buildEmbeddedOptions(FDSN_DATA.adelaide);
 
-            // Build DOI lookup: code_startYear -> { doi, name, startYear, endYear }
-            var doiMap = {};
-            for (var i = 0; i < fdsnNetworks.length; i++) {
-                var n = fdsnNetworks[i];
-                var code = n.fdsn_code;
-                var sy = n.start_date ? n.start_date.substring(0, 4) : '';
-                var ey = n.end_date ? n.end_date.substring(0, 4) : '';
-                var key = sy ? code + '_' + sy : code;
-                doiMap[key] = { doi: n.doi || '', name: n.name || '', startYear: sy, endYear: ey, code: code };
-                // Also store by code alone (fallback)
-                if (!doiMap[code] || n.doi) doiMap[code] = doiMap[key];
-            }
-
-            // Build institution option lists
-            institutionOptions.auspass = await buildAusPassOptions(doiMap);
-            institutionOptions.anu = buildInstitutionOptions(ANU_CODES, doiMap);
-            institutionOptions.utas = buildInstitutionOptions(UTAS_CODES, doiMap);
-            institutionOptions.adelaide = buildInstitutionOptions(ADELAIDE_CODES, doiMap);
+            // AusPass fetches live (has CORS support)
+            institutionOptions.auspass = await buildAusPassOptions();
 
             // Default to AusPass selected
             selectInstitution('auspass');
 
         } catch (err) {
-            console.error('Failed to load FDSN networks:', err);
+            console.error('Failed to initialise:', err);
             document.getElementById('network-status').textContent = 'Failed to load networks: ' + err.message;
         }
     }
-
-    var institutionOptions = {};
-    var activeInstitution = null;
 
     function selectInstitution(key) {
         activeInstitution = key;
@@ -287,7 +362,22 @@
         document.getElementById('network-status').textContent = options.length + ' networks (' + withDoi + ' with DOIs)';
     }
 
-    async function buildAusPassOptions(doiMap) {
+    function buildEmbeddedOptions(entries) {
+        var options = [];
+        for (var i = 0; i < entries.length; i++) {
+            var n = entries[i];
+            var yearRange = n.sy + (n.ey && n.ey !== n.sy ? '-' + n.ey : '');
+            options.push({
+                doi: n.doi,
+                label: n.code + ' (' + yearRange + '): ' + n.name + (n.doi ? '' : ' [no DOI]'),
+                sortKey: n.code + '_' + n.sy
+            });
+        }
+        sortByYearDesc(options);
+        return options;
+    }
+
+    async function buildAusPassOptions() {
         try {
             var resp = await fetch('https://auspass.edu.au/fdsnws/station/1/query?level=network&format=text');
             var text = await resp.text();
@@ -322,23 +412,6 @@
             console.error('AusPass fetch failed:', err);
             return [];
         }
-    }
-
-    function buildInstitutionOptions(codes, doiMap) {
-        var options = [];
-        for (var i = 0; i < codes.length; i++) {
-            var key = codes[i];
-            var match = doiMap[key] || doiMap[key.split('_')[0]];
-            if (!match) continue;
-            var yearRange = match.startYear + (match.endYear && match.endYear !== match.startYear ? '-' + match.endYear : '');
-            options.push({
-                doi: match.doi,
-                label: match.code + ' (' + yearRange + '): ' + match.name + (match.doi ? '' : ' [no DOI]'),
-                sortKey: match.code + '_' + match.startYear
-            });
-        }
-        sortByYearDesc(options);
-        return options;
     }
 
     function sortByYearDesc(options) {
